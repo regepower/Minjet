@@ -74,6 +74,46 @@ async def test_offline_device(
     assert _state(hass, "binary_sensor", "online").state == "off"
 
 
+async def test_offline_device_shows_zero_power(
+    hass: HomeAssistant,
+    mock_entry: MockConfigEntry,
+    mock_cloud: AiohttpClientMocker,
+    device: dict[str, Any],
+) -> None:
+    """Switched off: the cloud repeats old values, but power shows 0 W.
+
+    The grid value cannot be known without the device, so it is unavailable;
+    battery level and totals keep their last value.
+    """
+    await _setup(hass, mock_entry)
+    device["deviceStatus"] = "0"
+    register_cloud(mock_cloud, device)
+    await mock_entry.runtime_data.async_refresh()
+    await hass.async_block_till_done()
+
+    for key in (
+        "battery_power",
+        "pv_power",
+        "battery_charge_power",
+        "battery_discharge_power",
+        "pv_direct_power",
+        "output_power",
+    ):
+        assert float(_state(hass, "sensor", key).state) == 0.0, key
+    assert _state(hass, "sensor", "battery_state").state == "idle"
+    assert _state(hass, "sensor", "smart_meter_power").state == "unavailable"
+    assert _state(hass, "sensor", "battery_level").state == "49.0"
+    assert _state(hass, "sensor", "energy_generated").state == "402.1"
+
+    # back online -> real values again
+    device["deviceStatus"] = "1"
+    register_cloud(mock_cloud, device)
+    await mock_entry.runtime_data.async_refresh()
+    await hass.async_block_till_done()
+    assert _state(hass, "sensor", "output_power").state == "152.5"
+    assert _state(hass, "sensor", "smart_meter_power").state == "10.3"
+
+
 async def test_setup_retry_on_connection_error(
     hass: HomeAssistant,
     mock_entry: MockConfigEntry,

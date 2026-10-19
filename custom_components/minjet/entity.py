@@ -42,6 +42,15 @@ class MinjetEntity(CoordinatorEntity[MinjetCoordinator]):
         return self.device.get("properties") or {}
 
     @property
+    def offline(self) -> bool:
+        """True if the cloud reports the device as offline (for example switched off).
+
+        The cloud then keeps delivering the last measured values.
+        """
+        status = self.device.get("deviceStatus")
+        return status is not None and str(status) != "1"
+
+    @property
     def available(self) -> bool:
         """Stay available with the last values during short cloud outages."""
         if self._serial not in (self.coordinator.data or {}):

@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.5.7
+- When the device is switched off (cloud reports it offline), the cloud keeps repeating the last measured values. Power sensors now show **0 W** and *Battery state* shows *idle* instead; *Grid power* is **unavailable** (it cannot be known without the device). Battery level and energy totals keep their last value.
+
 ## 0.5.6
 - Integration icon is now the Minjet logo from the app.
 

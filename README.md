@@ -103,6 +103,10 @@ The rated output power is intentionally **read-only**: while the smart meter swi
 
 Press **Live 5 min** to get updates about every 2 seconds for 5 minutes, e.g. to watch the power flow on a dashboard. It does the same as opening the live view in the Minjet app: it opens the cloud WebSocket, which switches the device to 2-second uploads, and afterwards ends that mode with the same call the app uses (`closeRealTimeStatus`). The mode is always ended after 5 minutes, and also when the integration is reloaded, unloaded or Home Assistant stops. Pressing again while live does nothing. Polling every 60 s continues in the background.
 
+### Device switched off
+
+When the device is off, the cloud reports it offline but keeps repeating the last measured values. The integration then shows **0 W** for all power sensors and *idle* for *Battery state*; *Grid power* becomes **unavailable** because the smart meter reading comes from the device. Battery level and energy totals keep their last value.
+
 ## Daily values and the Energy dashboard
 
 The cloud's "today" and "month" fields are actually lifetime totals, and its statistics endpoint returns zeros. Build daily or monthly values in Home Assistant, for example:

@@ -37,6 +37,9 @@ class MinjetSensorDescription(SensorEntityDescription):
     """Sensor description with a value extractor over the ``properties`` dict."""
 
     value_fn: Callable[[dict[str, Any]], Any]
+    # While the device is offline the cloud repeats the last values:
+    offline_value: Any = None  # shown instead (e.g. 0 W for power)
+    unavailable_offline: bool = False  # or: no value can be known at all
 
 
 def _prop(key: str) -> Callable[[dict[str, Any]], Any]:
@@ -106,6 +109,7 @@ SENSORS: tuple[MinjetSensorDescription, ...] = (
     ),
     MinjetSensorDescription(
         key="battery_power",
+        offline_value=0.0,
         translation_key="battery_power",
         device_class=SensorDeviceClass.POWER,
         native_unit_of_measurement=UnitOfPower.WATT,
@@ -114,6 +118,7 @@ SENSORS: tuple[MinjetSensorDescription, ...] = (
     ),
     MinjetSensorDescription(
         key="battery_state",
+        offline_value="idle",
         translation_key="battery_state",
         device_class=SensorDeviceClass.ENUM,
         options=list(BATTERY_STATES.values()),
@@ -121,6 +126,7 @@ SENSORS: tuple[MinjetSensorDescription, ...] = (
     ),
     MinjetSensorDescription(
         key="pv_power",
+        offline_value=0.0,
         translation_key="pv_power",
         device_class=SensorDeviceClass.POWER,
         native_unit_of_measurement=UnitOfPower.WATT,
@@ -129,6 +135,7 @@ SENSORS: tuple[MinjetSensorDescription, ...] = (
     ),
     MinjetSensorDescription(
         key="battery_charge_power",
+        offline_value=0.0,
         translation_key="battery_charge_power",
         device_class=SensorDeviceClass.POWER,
         native_unit_of_measurement=UnitOfPower.WATT,
@@ -137,6 +144,7 @@ SENSORS: tuple[MinjetSensorDescription, ...] = (
     ),
     MinjetSensorDescription(
         key="battery_discharge_power",
+        offline_value=0.0,
         translation_key="battery_discharge_power",
         device_class=SensorDeviceClass.POWER,
         native_unit_of_measurement=UnitOfPower.WATT,
@@ -145,6 +153,7 @@ SENSORS: tuple[MinjetSensorDescription, ...] = (
     ),
     MinjetSensorDescription(
         key="pv_direct_power",
+        offline_value=0.0,
         translation_key="pv_direct_power",
         device_class=SensorDeviceClass.POWER,
         native_unit_of_measurement=UnitOfPower.WATT,
@@ -153,6 +162,7 @@ SENSORS: tuple[MinjetSensorDescription, ...] = (
     ),
     MinjetSensorDescription(
         key="output_power",
+        offline_value=0.0,
         translation_key="output_power",
         device_class=SensorDeviceClass.POWER,
         native_unit_of_measurement=UnitOfPower.WATT,
@@ -161,6 +171,7 @@ SENSORS: tuple[MinjetSensorDescription, ...] = (
     ),
     MinjetSensorDescription(
         key="smart_meter_power",
+        unavailable_offline=True,
         translation_key="smart_meter_power",
         device_class=SensorDeviceClass.POWER,
         native_unit_of_measurement=UnitOfPower.WATT,
@@ -282,8 +293,17 @@ class MinjetSensor(MinjetEntity, RestoreSensor):
             self._restored_value = last.native_value
 
     @property
+    def available(self) -> bool:
+        """Values that cannot be known while the device is off are unavailable."""
+        if self.entity_description.unavailable_offline and self.offline:
+            return False
+        return super().available
+
+    @property
     def native_value(self) -> Any:
         """Return the current value, or the last known one."""
+        if self.offline and self.entity_description.offline_value is not None:
+            return self.entity_description.offline_value
         value = self.entity_description.value_fn(self.properties)
         return self._restored_value if value is None else value
 

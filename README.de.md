@@ -98,6 +98,10 @@ Die Nennleistung ist bewusst **nur lesbar**: Bei eingeschaltetem Smart-Meter-Sch
 
 **Live 5 min** drücken liefert 5 Minuten lang etwa alle 2 Sekunden neue Werte, z. B. um den Energiefluss im Dashboard zu beobachten. Das entspricht dem Öffnen der Live-Ansicht in der Minjet-App: Der Cloud-WebSocket wird geöffnet (Gerät lädt dann alle 2 s hoch) und danach wird der Modus mit demselben Aufruf wie in der App beendet (`closeRealTimeStatus`). Der Modus endet immer nach 5 Minuten, ebenso beim Neuladen/Entladen der Integration oder Beenden von Home Assistant. Erneutes Drücken während Live bewirkt nichts. Die 60-s-Abfrage läuft im Hintergrund weiter.
 
+### Gerät ausgeschaltet
+
+Ist das Gerät aus, meldet die Cloud es als offline, wiederholt aber die zuletzt gemessenen Werte. Die Integration zeigt dann **0 W** für alle Leistungssensoren und *idle* beim *Batteriezustand*; die *Netzleistung* ist **nicht verfügbar**, weil der Smart-Meter-Wert vom Gerät kommt. Batteriestand und Energiezähler behalten ihren letzten Wert.
+
 ## Tageswerte und Energie-Dashboard
 
 Die Felder „heute" und „Monat" der Cloud sind in Wirklichkeit Gesamtzähler, und der Statistik-Endpunkt liefert nur Nullen. Tages- und Monatswerte bildest du in Home Assistant, zum Beispiel:
